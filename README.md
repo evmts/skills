@@ -13,19 +13,39 @@ Cross-platform AI agent skills for [Voltaire](https://voltaire.tevm.sh) and [Vol
 
 ### Claude Code
 
-```bash
-# User-level installation
-git clone https://github.com/evmts/voltaire-skills ~/.claude/skills/voltaire-skills
+Skills are stored in `~/.claude/skills/` (personal) or `.claude/skills/` (project-level).
 
-# Or symlink individual skills
+```bash
+# Personal installation (available in all projects)
+git clone https://github.com/evmts/skills ~/.claude/skills/voltaire-skills
+```
+
+Or symlink individual skills:
+```bash
 ln -s ~/.claude/skills/voltaire-skills/voltaire ~/.claude/skills/voltaire
-ln -s ~/.claude/skills/voltaire-skills/voltaire-effect ~/.claude/skills/voltaire-effect
+ln -s ~/.claude/skills/voltaire-effect ~/.claude/skills/voltaire-effect
+```
+
+For project-level (just this repo):
+```bash
+git clone https://github.com/evmts/skills .claude/skills/voltaire-skills
 ```
 
 ### OpenAI Codex
 
+Codex uses `AGENTS.md` files for instructions. Add to your project root or `~/.codex/`:
+
 ```bash
-git clone https://github.com/evmts/voltaire-skills ~/.codex/skills/voltaire-skills
+# Personal installation
+git clone https://github.com/evmts/skills ~/.codex/skills/voltaire-skills
+
+# Then reference in your AGENTS.md:
+# See ~/.codex/skills/voltaire-skills/voltaire/SKILL.md for Voltaire usage
+```
+
+Or copy skill content directly into your `AGENTS.md`:
+```bash
+cat ~/.codex/skills/voltaire-skills/voltaire/SKILL.md >> AGENTS.md
 ```
 
 ### Amp (Sourcegraph)
@@ -63,10 +83,12 @@ git submodule add https://github.com/evmts/voltaire-skills skills
 /voltaire-effect  # Load Effect.ts integration guidance
 ```
 
+Skills auto-invoke when Claude detects relevant context.
+
 ### Codex
+Reference the skill content in your `AGENTS.md` or include via comments:
 ```
-$voltaire
-$voltaire-effect
+# See voltaire skill for Ethereum primitives patterns
 ```
 
 ### Amp
