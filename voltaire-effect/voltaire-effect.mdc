@@ -1,0 +1,114 @@
+---
+description: Voltaire-Effect - Effect.ts integration for typed errors, Provider/Signer services, contract patterns
+globs: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"]
+alwaysApply: false
+---
+
+# Voltaire-Effect
+
+Effect.ts integration for Voltaire with typed errors, services, and composable operations.
+
+## Installation
+
+```bash
+npm install voltaire-effect effect @tevm/voltaire
+```
+
+## Core Pattern: Typed Effects
+
+Every operation returns `Effect<A, E, R>`:
+
+```typescript
+import { Effect } from 'effect';
+import { Provider, getBalance } from 'voltaire-effect';
+
+const balance = getBalance(address);
+// Effect<Uint256, ProviderError, Provider>
+
+await Effect.runPromise(
+  balance.pipe(Effect.provide(Provider.http("https://eth.llamarpc.com")))
+);
+```
+
+## Contract Registry (Recommended)
+
+```typescript
+import { makeContractRegistry, Contract } from 'voltaire-effect';
+
+const contracts = makeContractRegistry({
+  usdc: Contract.fromAbi({ abi: erc20Abi, address: usdcAddress }),
+  weth: Contract.fromAbi({ abi: wethAbi, address: wethAddress })
+});
+
+// Read (needs Provider)
+contracts.usdc.read.balanceOf(owner);
+
+// Write (needs Provider + Signer)
+contracts.usdc.write.transfer(to, amount);
+```
+
+## Services
+
+### Provider
+```typescript
+Provider.http("https://eth.llamarpc.com")
+Provider.websocket("wss://eth.llamarpc.com")
+```
+
+### Signer
+```typescript
+Signer.fromPrivateKey(privateKey)
+Signer.fromMnemonic("word1 word2...", "m/44'/60'/0'/0/0")
+```
+
+## Typed Errors
+
+```typescript
+import { RevertError, ProviderError } from 'voltaire-effect';
+
+transfer(to, amount).pipe(
+  Effect.catchTag("RevertError", (e) =>
+    Effect.fail(new Error(`Reverted: ${e.reason}`))
+  ),
+  Effect.catchTag("ProviderError", () =>
+    Effect.retry({ times: 3 })
+  )
+);
+```
+
+## Composability
+
+```typescript
+// Retry
+getBalance(addr).pipe(Effect.retry({ times: 5 }));
+
+// Timeout
+getBalance(addr).pipe(Effect.timeout("10 seconds"));
+
+// Parallel
+Effect.all([getBalance(a), getBalance(b)], { concurrency: 2 });
+
+// Sequential
+Effect.gen(function* () {
+  yield* token.write.approve(spender, amount);
+  yield* token.write.transferFrom(from, to, amount);
+});
+```
+
+## Running Effects
+
+```typescript
+const AppLayer = Layer.mergeAll(
+  Provider.http("https://..."),
+  Signer.fromPrivateKey(pk)
+);
+
+await Effect.runPromise(
+  myEffect.pipe(Effect.provide(AppLayer))
+);
+```
+
+## Docs
+
+- https://voltaire-effect.tevm.sh
+- https://effect.website

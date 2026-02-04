@@ -1,0 +1,83 @@
+---
+description: Voltaire Ethereum primitives library - branded types, ABI encoding, RLP, transactions
+globs: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"]
+alwaysApply: false
+---
+
+# Voltaire Primitives
+
+Use Voltaire for Ethereum primitives. Does NOT include provider/signer - use voltaire-effect for that.
+
+## Installation
+
+```bash
+npm install @tevm/voltaire
+```
+
+## Namespace Imports (Required for Tree-Shaking)
+
+```typescript
+import * as Address from '@tevm/voltaire/Address';
+import * as Uint256 from '@tevm/voltaire/Uint256';
+import * as Hex from '@tevm/voltaire/Hex';
+import * as Abi from '@tevm/voltaire/Abi';
+import * as Transaction from '@tevm/voltaire/Transaction';
+```
+
+## Branded Types - Always Use Constructors
+
+```typescript
+// WRONG
+const addr = "0x1234...";
+
+// CORRECT
+const addr = Address.from("0x1234...");
+```
+
+## Key APIs
+
+### Address
+```typescript
+Address.from(input)        // Create from hex/bytes
+Address.toHex(addr)        // To hex string
+Address.toChecksum(addr)   // EIP-55 checksum
+Address.isValid(input)     // Validate
+Address.equals(a, b)       // Compare
+```
+
+### Uint256
+```typescript
+Uint256.from(bigint | number | string)
+Uint256.toBigInt(value)
+Uint256.add(a, b)
+Uint256.mul(a, b)
+```
+
+### ABI
+```typescript
+Abi.encodeCall({ abi, functionName, args })
+Abi.decodeResult({ abi, functionName, data })
+Abi.encodeParameters(types, values)
+Abi.decodeEventLog({ abi, data, topics })
+```
+
+### Transaction
+```typescript
+Transaction.from({ type: 'eip1559', ... })
+Transaction.sign(tx, privateKey)
+Transaction.serialize(tx)
+Transaction.hash(tx)
+```
+
+### Signature
+```typescript
+Signature.sign(messageHash, privateKey)
+Signature.recover(messageHash, signature)
+Signature.verify(messageHash, signature, publicKey)
+```
+
+## Docs
+
+- https://voltaire.tevm.sh
+- https://voltaire.tevm.sh/primitives
+- https://voltaire.tevm.sh/crypto
