@@ -207,55 +207,29 @@ const result = await Effect.runPromise(
 );
 ```
 
-## ContractRegistryService
+## Contract Registry
 
 Dependency injection for pre-configured contracts.
 
 ### Creating a Registry
 
 ```typescript
-import { makeContractRegistry, Contract } from 'voltaire-effect';
+import { makeContractRegistry } from 'voltaire-effect';
 
-const registry = makeContractRegistry({
-  // Each key becomes a property on the registry
-  usdc: Contract.fromAbi({
-    abi: erc20Abi,
-    address: usdcAddress
-  }),
-  weth: Contract.fromAbi({
-    abi: wethAbi,
-    address: wethAddress
-  }),
-  uniswapRouter: Contract.fromAbi({
-    abi: uniswapRouterAbi,
-    address: routerAddress
-  })
+const Contracts = makeContractRegistry({
+  usdc: { abi: erc20Abi, address: usdcAddress },
+  weth: { abi: wethAbi, address: wethAddress },
+  uniswapRouter: { abi: uniswapRouterAbi, address: routerAddress },
 });
-
-// Type-safe access
-registry.usdc.read.balanceOf(owner);
-registry.weth.write.deposit();
-registry.uniswapRouter.write.swapExactTokensForTokens(...);
 ```
 
-### Using as a Service
+### Using in Effects
 
 ```typescript
-import { Effect, Layer, Context } from 'effect';
-import { ContractRegistryService } from 'voltaire-effect';
+import { Effect } from 'effect';
 
-// Define the registry type
-type MyRegistry = typeof registry;
-
-// Create the service tag
-const MyContracts = Context.GenericTag<MyRegistry>("MyContracts");
-
-// Create layer
-const ContractsLayer = Layer.succeed(MyContracts, registry);
-
-// Use in effects
 const swap = Effect.gen(function* () {
-  const contracts = yield* MyContracts;
+  const contracts = yield* Contracts.Service;
 
   // Approve USDC
   yield* contracts.usdc.write.approve(
@@ -278,7 +252,7 @@ const swap = Effect.gen(function* () {
 // Run with layer
 await Effect.runPromise(
   swap.pipe(
-    Effect.provide(ContractsLayer),
+    Effect.provide(Contracts.layer),
     Effect.provide(Provider.http("...")),
     Effect.provide(Signer.fromPrivateKey(pk))
   )
@@ -325,6 +299,10 @@ const decoded = rlpDecode(encoded);
 import { Effect, Layer } from 'effect';
 import { Provider, Signer, makeContractRegistry } from 'voltaire-effect';
 
+const Contracts = makeContractRegistry({
+  usdc: { abi: erc20Abi, address: usdcAddress },
+});
+
 // Build the full application layer
 const AppLayer = Layer.mergeAll(
   // Provider for reads
@@ -334,12 +312,12 @@ const AppLayer = Layer.mergeAll(
   Signer.fromPrivateKey(privateKey),
 
   // Contracts
-  Layer.succeed(MyContracts, registry)
+  Contracts.layer
 );
 
 // All effects can now access all services
 const complexOperation = Effect.gen(function* () {
-  const contracts = yield* MyContracts;
+  const contracts = yield* Contracts.Service;
   const balance = yield* contracts.usdc.read.balanceOf(myAddress);
   // ... more operations
 }).pipe(Effect.provide(AppLayer));

@@ -154,28 +154,26 @@ const signer = Signer.fromMnemonic(
 );
 ```
 
-### ContractRegistryService
+### Contract Registry
 
 Dependency injection for contracts:
 
 ```typescript
-import { ContractRegistryService, makeContractRegistry } from 'voltaire-effect';
-import { Effect, Layer } from 'effect';
+import { makeContractRegistry } from 'voltaire-effect';
+import { Effect } from 'effect';
 
-const registry = makeContractRegistry({ usdc, weth, uniswap });
-
-// Create layer
-const ContractLayer = Layer.succeed(
-  ContractRegistryService,
-  registry
-);
+const Contracts = makeContractRegistry({
+  usdc: { abi: erc20Abi, address: usdcAddress },
+  weth: { abi: wethAbi, address: wethAddress },
+  uniswap: { abi: uniswapAbi, address: uniswapAddress },
+});
 
 // Use in effects
 const swap = Effect.gen(function* () {
-  const contracts = yield* ContractRegistryService;
+  const contracts = yield* Contracts.Service;
   yield* contracts.usdc.write.approve(uniswapAddress, amount);
   yield* contracts.uniswap.write.swap(params);
-});
+}).pipe(Effect.provide(Contracts.layer));
 ```
 
 ## Typed Errors
